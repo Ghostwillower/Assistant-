@@ -111,7 +111,7 @@ class AssistantGUI:
         
         self.input_entry = ttk.Entry(input_frame)
         self.input_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
-        self.input_entry.bind('<Return>', lambda e: self._execute_command())
+        self.input_entry.bind('<Return>', self._on_enter_key)
         
         ttk.Button(input_frame, text="Execute", command=self._execute_command).grid(row=0, column=1)
         
@@ -173,6 +173,12 @@ class AssistantGUI:
             command_text = self.command_list.get(selection[0])
             command = command_text.split(':')[0].strip()
             self._log_output(f"Selected command: {command}")
+    
+    def _on_enter_key(self, event=None):
+        """
+        Handle Enter key press in input field.
+        """
+        self._execute_command()
     
     def _on_mode_change(self):
         """

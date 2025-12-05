@@ -206,9 +206,11 @@ Respond ONLY with the JSON object, no additional text.
                 
                 # Try to match a command
                 for cmd, desc in commands.items():
-                    if cmd.lower() in user_input_lower:
+                    # Escape the command for safe regex usage
+                    escaped_cmd = re.escape(cmd.lower())
+                    if escaped_cmd in user_input_lower:
                         # Extract potential arguments (everything after the command)
-                        arg_match = re.search(rf'{cmd}\s+(.+)', user_input_lower)
+                        arg_match = re.search(rf'{escaped_cmd}\s+(.+)', user_input_lower)
                         arguments = arg_match.group(1) if arg_match else ""
                         
                         return {
@@ -221,55 +223,63 @@ Respond ONLY with the JSON object, no additional text.
         
         # Keyword-based matching for common operations
         if any(word in user_input_lower for word in ['calculate', 'add', 'subtract', 'multiply', 'divide', 'math', 'what is']):
-            # Extract mathematical expression more carefully
-            # Remove common question words
-            math_input = user_input_lower
-            for word in ['calculate', 'what is', 'compute', 'solve']:
-                math_input = math_input.replace(word, '')
-            
-            # Replace word operators with symbols
-            math_input = math_input.replace(' plus ', '+')
-            math_input = math_input.replace(' add ', '+')
-            math_input = math_input.replace(' minus ', '-')
-            math_input = math_input.replace(' subtract ', '-')
-            math_input = math_input.replace(' times ', '*')
-            math_input = math_input.replace(' multiply by ', '*')
-            math_input = math_input.replace(' multiplied by ', '*')
-            math_input = math_input.replace(' divided by ', '/')
-            math_input = math_input.replace(' by ', '*')
-            math_input = math_input.replace('?', '')
-            
-            # Clean up and extract numbers and operators
-            math_expr = re.sub(r'[^0-9+\-*/().\s]', '', math_input)
-            math_expr = math_expr.strip()
-            
-            if math_expr:
-                return {
-                    "success": True,
-                    "driver": "Calculator",
-                    "command": "eval",
-                    "arguments": math_expr,
-                    "response": f"Calculating: {math_expr}"
-                }
+            # Check if Calculator driver is available
+            if "Calculator" in available_drivers:
+                # Extract mathematical expression more carefully
+                # Remove common question words
+                math_input = user_input_lower
+                for word in ['calculate', 'what is', 'compute', 'solve']:
+                    math_input = math_input.replace(word, '')
+                
+                # Replace word operators with symbols
+                math_input = math_input.replace(' plus ', '+')
+                math_input = math_input.replace(' add ', '+')
+                math_input = math_input.replace(' minus ', '-')
+                math_input = math_input.replace(' subtract ', '-')
+                math_input = math_input.replace(' times ', '*')
+                math_input = math_input.replace(' multiply by ', '*')
+                math_input = math_input.replace(' multiplied by ', '*')
+                math_input = math_input.replace(' divided by ', '/')
+                math_input = math_input.replace(' by ', '*')
+                math_input = math_input.replace('?', '')
+                
+                # Clean up and extract numbers and operators
+                math_expr = re.sub(r'[^0-9+\-*/().\s]', '', math_input)
+                math_expr = math_expr.strip()
+                
+                # Validate the expression structure to prevent malicious input
+                # Only allow numbers, basic operators, parentheses, decimal points, and whitespace
+                if math_expr:
+                    # Additional check: ensure expression is not empty and contains at least one digit
+                    if re.search(r'\d', math_expr):  # Must contain at least one digit
+                        return {
+                            "success": True,
+                            "driver": "Calculator",
+                            "command": "eval",
+                            "arguments": math_expr,
+                            "response": f"Calculating: {math_expr}"
+                        }
         
         if any(word in user_input_lower for word in ['file', 'list', 'directory', 'folder']):
-            if 'list' in user_input_lower or 'show' in user_input_lower:
-                return {
-                    "success": True,
-                    "driver": "FileManager",
-                    "command": "list",
-                    "arguments": ".",
-                    "response": "Listing files in current directory."
-                }
+            if "FileManager" in available_drivers:
+                if 'list' in user_input_lower or 'show' in user_input_lower:
+                    return {
+                        "success": True,
+                        "driver": "FileManager",
+                        "command": "list",
+                        "arguments": ".",
+                        "response": "Listing files in current directory."
+                    }
         
         if any(word in user_input_lower for word in ['system', 'os', 'platform', 'info']):
-            return {
-                "success": True,
-                "driver": "SystemInfo",
-                "command": "all",
-                "arguments": "",
-                "response": "Gathering system information."
-            }
+            if "SystemInfo" in available_drivers:
+                return {
+                    "success": True,
+                    "driver": "SystemInfo",
+                    "command": "all",
+                    "arguments": "",
+                    "response": "Gathering system information."
+                }
         
         # No match found
         return {
