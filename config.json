@@ -1,0 +1,16 @@
+{
+  "app_name": "Desktop Assistant",
+  "version": "1.0.0",
+  "drivers_directory": "drivers",
+  "auto_load_drivers": true,
+  "enabled_drivers": [
+    "calculator_driver",
+    "file_manager_driver",
+    "system_info_driver"
+  ],
+  "window_settings": {
+    "width": 800,
+    "height": 600,
+    "title": "Desktop Assistant"
+  }
+}

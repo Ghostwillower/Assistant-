@@ -1,0 +1,5 @@
+# Desktop Assistant Requirements
+# Python 3.7+
+
+# GUI is built with Tkinter (included in Python standard library)
+# No external dependencies required for basic functionality
