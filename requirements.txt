@@ -3,6 +3,3 @@
 
 # GUI is built with Tkinter (included in Python standard library)
 # No external dependencies required for basic functionality
-
-# Optional: For enhanced features
-psutil>=5.9.0  # System information driver
