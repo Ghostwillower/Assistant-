@@ -8,6 +8,7 @@ import json
 import os
 from typing import Dict, Any, Optional
 from driver_manager import DriverManager
+from llm_handler import LLMHandler
 
 
 class AssistantCore:
@@ -25,6 +26,7 @@ class AssistantCore:
         self.config_path = config_path
         self.config = self._load_config()
         self.driver_manager = DriverManager(self.config.get("drivers_directory", "drivers"))
+        self.llm_handler = LLMHandler(self.config)
         self.running = False
     
     def _load_config(self) -> Dict[str, Any]:
@@ -61,6 +63,12 @@ class AssistantCore:
                 "width": 800,
                 "height": 600,
                 "title": "Desktop Assistant"
+            },
+            "llm": {
+                "enabled": False,
+                "provider": "openai",
+                "model": "gpt-3.5-turbo",
+                "api_key": ""
             }
         }
     
@@ -143,3 +151,62 @@ class AssistantCore:
         if driver:
             return driver.get_commands()
         return None
+    
+    def process_natural_language(self, user_input: str) -> Dict[str, Any]:
+        """
+        Process natural language input using LLM.
+        
+        Args:
+            user_input: Natural language input from user
+            
+        Returns:
+            Dict containing the result of processing
+        """
+        # Get available drivers and their commands
+        drivers_info = {}
+        for driver_name, driver in self.driver_manager.get_all_drivers().items():
+            drivers_info[driver_name] = {
+                'description': driver.description,
+                'commands': driver.get_commands()
+            }
+        
+        # Parse the input using LLM
+        parsed = self.llm_handler.parse_natural_language(user_input, drivers_info)
+        
+        # If successfully parsed and mapped to a command, execute it
+        if parsed.get('success') and parsed.get('driver') and parsed.get('command'):
+            try:
+                driver_name = parsed['driver']
+                command = parsed['command']
+                arguments = parsed.get('arguments', '')
+                
+                # Execute the command
+                result = self.execute_command(driver_name, command, arguments)
+                
+                return {
+                    'success': True,
+                    'driver': driver_name,
+                    'command': command,
+                    'arguments': arguments,
+                    'result': result,
+                    'response': parsed.get('response', ''),
+                    'full_response': f"{parsed.get('response', '')}\n\nResult: {result}"
+                }
+            except Exception as e:
+                return {
+                    'success': False,
+                    'error': str(e),
+                    'response': f"Error executing command: {str(e)}"
+                }
+        else:
+            # Return the parsed response even if no command was matched
+            return parsed
+    
+    def is_llm_enabled(self) -> bool:
+        """
+        Check if LLM is enabled.
+        
+        Returns:
+            bool: True if LLM is enabled
+        """
+        return self.llm_handler.enabled

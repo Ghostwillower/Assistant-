@@ -3,3 +3,8 @@
 
 # GUI is built with Tkinter (included in Python standard library)
 # No external dependencies required for basic functionality
+
+# Optional: LLM Integration
+# Uncomment the lines below to enable natural language processing
+# openai>=1.0.0  # For OpenAI GPT models
+# anthropic>=0.7.0  # For Anthropic Claude models
